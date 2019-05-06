@@ -1,0 +1,14 @@
+In this project, I built "a multi-process telnet-like client and server," as the spec puts it.
+The first part of the project involves editing the file open on fd0 so that it reads input character-at-a-time, and follows "no-echo mode."
+
+I got to learn about various system calls that I had not used before, as well as brush up on
+system calls that I am familiar with by applying my knowledge to this project. For instance,
+I had never even heard of pipe(2) before, but in this project I learned about its uses and applied what I learned.
+I was already familiar with fork(2) from CS course readings, but I had never used it actually while coding.
+
+lab1a.c contains the source code for the multi-process telnet-like client and server.
+
+Makefile allows three options:
+  1. default: compile lab1a.c with gcc under the c99 standard, with -g, -Wall, and -Wextra options.
+  2. clean: clean up the directory and restore to original state.
+  3. dist: Create a tarball containing the source code lab1a.c, Makefile, and README.
