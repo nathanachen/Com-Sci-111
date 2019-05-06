@@ -1,0 +1,125 @@
+Files in this project:
+    lab2_add-1.png, lab2_add-2.png, lab2_add-3.png, lab2_add-4.png, and lab2_add-5.png
+        graphs for the add program.
+    
+    lab2_list-1.png, lab2_list-2.png, lab2_list-3.png, and lab2_list-4.png
+        graphs for the list program.
+    
+    lab2_add.csv
+        contains comma-separated-values data that the graphs are based off of.
+    
+    lab2_list.csv
+        contains comma-separated-values data that the graphs are bassed off of.
+    
+    Makefile
+        Build: Compiles source code, builds executables
+        Tests: Run test cases to generate results in CSV files
+        Graphs: Plots graphs from data
+        Dist: Creates the tarball
+        Clean: Deletes all programs and output created by Makefile
+    
+    SortedList.h
+        Provided header file for the list program that contains important list functions and defines
+        the structure of the sorted list we are using.
+    
+    SortedList.c
+        Implementation of SortedList.h functions.
+    
+    lab2_add.c
+        Source code for program to do part 1 of the project (add). Takes yield, threads, iterations, and
+        synchronization options.
+    
+    lab2_list.c
+        Source code for program to do part 2 of the project (list). Takes yield, threads, iterations,
+        and synchronization options.
+
+QUESTION 2.1.1 - causing conflicts:
+Why does it take many iterations before errors are seen?
+Why does a significantly smaller number of iterations so seldom fail?
+
+    ANSWER: It seems like 100 iterations is fine, but 1000+ iterations results in errors in the count.
+    It takes many iterations before errors are seen because when there's preemption, a thread may not finish
+    doing its adding/subtracting to the count before another thread starts doing its own adding/subtracting.
+    The higher the number of iterations, the longer it takes for each thread to finish its job of
+    adding/substracting from start to end, and so it's more likely for another thread to interrupt and
+    increment/decrement the count before one thread is finished doing so, messing up the count.
+    Using a smaller number of iterations means a thread can finish adding/subtracting quickly before another
+    thread gets a chance to try to preempt and interrupt it.
+    OUTPUT RESULTS:
+        threads=2:
+            Iterations    | 100 | 1000 | 10000 | 100000 |
+            Counter Value |  0  | 450  | 6842  | -73941 |
+        threads=8:
+            Iterations    | 100 | 1000 | 10000 | 100000 |
+            Counter Value | 0  | -340 | -412  | -24462 |
+        threads=16:
+            Iterations    | 100 | 1000 | 10000 | 100000 |
+            Counter Value | 0  | 1041 | -6326  | -42686 |
+
+QUESTION 2.1.2 - cost of yielding:
+Why are the --yield runs so much slower?
+    ANSWER: Because of the overhead from the yield causing a thread to give up the CPU and switch
+    control to another thread, allowing the other thread to execute the code in the critical section.
+    In order to do this we need to perform a context switch (and also save the original stack, 
+    registers, and instruction pointer), which are extra steps to take that contribute to the overhead.
+Where is the additional time going?
+    ANSWER: Time for saving the original thread's stack, registers, instruction pointer, state, etc. and
+    performing the context switch. Time for doing an interrupt and preempting the original thread.
+    Time for updating the scheduler to keep track of which thread has priority currently when
+    we switch to a new thread.
+Is it possible to get valid per-operation timings if we are using the --yield option?
+If so, explain how. If not, explain why not.
+    ANSWER: No, because all we're doing is measuring the start and end times. We have no idea how many
+    interrupts there are from yields and when they happen, which adds overhead time and will interfere
+    with our total start and end times. If we just divide the total time by the number of operations,
+    we can't separate operation times from the overhead time.
+    
+    OUTPUT RESULTS IN CSV FILE
+    
+QUESTION 2.1.3 - measurement errors:
+Why does the average cost per operation drop with increasing iterations?
+    ANSWER: It drops because the more iterations there are, the more time goes to executing
+    instructions instead of preemption/context switching, reducing the overhead.
+If the cost per iteration is a function of the number of iterations, how do we know how many iterations to run (or what the "correct" cost is)?
+    ANSWER: In theory, the higher the number of iterations the less the average cost per operation
+    because we're slowly getting rid of the error from context switching overhead. So if we
+    hypothetically had infinity iterations (or just a very large number of iterations) we would
+    approach the accurate cost per iteration.
+
+QUESTION 2.1.4 - costs of serialization:
+Why do all of the options perform similarly for low numbers of threads?
+    ANSWER: When we have a low number of threads, we have less threads competing to take priority and
+    enter the critical section at a time, so there's less overhead from context switching between
+    multiple threads. Subsequently, locking behaviors don't starve threads as often and so no
+    matter the version of locking we implement, there's similar behavior because during every run
+    it's straightforward behavior where threads are more likely to run to completion without another
+    thread waiting for it to finish.
+Why do the three protected operations slow down as the number of threads rises?
+    ANSWER: It slows down because if you have multiple threads, then it's more likely to have a lot of
+    them try to cause a context switch so they can access the critical section. The overhead from that,
+    along with the overhead from threads not being able to do anything while the critical section is
+    locked and must waste time waiting, slows down the operations.
+    
+QUESTION 2.2.1 - scalability of Mutex
+Compare the variation in time per mutex-protected operation vs the number of threads in Part-1 (adds) and Part-2 (sorted lists).
+Comment on the general shapes of the curves, and explain why they have this shape.
+Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation for these differences.
+    ANSWER: In part 1, it has a higher cost per operation with lower number of threads and lower cost with higher number of threads. In part 2, it has a 
+    lower cost per operation with lower number of threads and higher cost with higher number of threads (reversed when compared to part 1).
+    List has a greater rate of increase as the number of threads goes up because list has to deal with keeping track of the list nodes as 
+    we insert and delete elements, as well as having to do more operations (so we have more locks), and both of these reasons lead to
+    more overhead overall which explains the higher cost. The graphs are both nearly linear, but add's cost per operation 
+    goes down as threads increase and list's cost goes up as threads increase.
+
+QUESTION 2.2.2 - scalability of spin locks
+Compare the variation in time per protected operation vs the number of threads for list operations protected by Mutex vs Spin locks. Comment on the general shapes of the curves, and explain why they have this shape.
+Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation for these differences.
+    ANSWER: Mutex and Spin Lock both appear to have similar graphs for cost per operation vs
+    number of threads because they're both almost linear and have similar values. The overhead per
+    operation generally increases as the number of threads grows higher. This is due to more context
+    switches and more threads backed up by spin locks/mutexes as they try to access the critical
+    section but are not able to, subsequently "wasting" time either spinning in a while loop or 
+    sleeping. Variations in the mutex and spin lock costs can also be attributed to mutexes requiring
+    time for threads to go to sleep and be woken up while spin locks just wait in a loop; in essence,
+    they both work as synchronization methods but they are implemented differently if you look closer
+    on a lower level of design.
